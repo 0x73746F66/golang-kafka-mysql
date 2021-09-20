@@ -1,0 +1,144 @@
+version: '3.9'
+services:
+  mysql:
+    image: docker.io/library/mysql:8
+    container_name: mysql
+    command: 'mysqld --bind-address=0.0.0.0'
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/main.cnf:/etc/mysql/conf.d/main.cnf
+      - ./.development/mysql:/tmp/sql
+    ports:
+      - 33306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_DEV_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    security_opt:
+      - seccomp:"./.development/mysql/seccomp.json"
+    healthcheck:
+      test: mysqladmin ping -h mysql
+      timeout: 20s
+      retries: 10
+    networks:
+      default:
+        aliases:
+          - mysql
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 10
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 1GB
+        reservations:
+          memory: 500M
+
+  zookeeper:
+    image: docker.io/library/zookeeper:3.7
+    container_name: zookeeper
+    ports:
+      - '50000:2181'
+    environment: # dev only, for prod you need an X509 and user/pass
+      ALLOW_ANONYMOUS_LOGIN: 'yes'
+    volumes:
+      - "zookeeper-data:/bitnami"
+    networks:
+      default:
+        aliases:
+          - zookeeper
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 10
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 1GB
+        reservations:
+          memory: 500M
+
+  kafka:
+    image: docker.io/bitnami/kafka:2
+    container_name: kafka
+    hostname: ${KAFKA_HOSTNAME:-kafka}
+    expose:
+      - 9092
+      - 9093
+    ports:
+      - "9092:9092"
+    networks:
+      default:
+        aliases:
+          - ${KAFKA_HOSTNAME:-kafka}
+    depends_on:
+      - zookeeper
+    environment: # dev only, for prod you need a very different cluster setup with an X509 and user/pass also
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_ADVERTISED_HOST_NAME=${KAFKA_HOSTNAME:-kafka}
+      - KAFKA_BROKER_ID=1
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+    volumes:
+      - 'kafka-data:/bitnami'
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 10
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 1GB
+        reservations:
+          memory: 500M
+
+  publisher:
+    container_name: publisher
+    depends_on:
+      - kafka
+    build:
+      context: ./
+    volumes:
+      - './main.go:/go/src/app/main.go'
+    networks:
+      default:
+    environment:
+      - BROKERS=kafka:9092
+      - TOPIC=fiskil-logs
+      - CLIENT_ID=mysql-ingest
+      - INSERT_BATCH_SIZE=${INSERT_BATCH_SIZE}
+      - FLUSH_INTERVAL_SECS=${FLUSH_INTERVAL_SECS}
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=${MYSQL_DEV_PASSWORD}
+      - MYSQL_SCHEMA=${MYSQL_DATABASE}
+
+volumes:
+  mysql-data:
+    external: true
+    name: mysql-data
+  kafka-data:
+    external: true
+    name: kafka-data
+  zookeeper-data:
+    external: true
+    name: zookeeper-data
+
+networks:
+  default:
+    external:
+      name: fiskil

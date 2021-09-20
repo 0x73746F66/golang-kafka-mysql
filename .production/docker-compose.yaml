@@ -1,0 +1,97 @@
+version: '3.9'
+x-defaults: &defaults
+  env_file: .env
+  logging:
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  mysql-replica:
+    <<: *defaults
+    image: docker.io/library/mysql:8
+    container_name: mysql-replica
+    hostname: mysql-replica
+    command: 'mysqld --bind-address=0.0.0.0'
+    volumes:
+      - mysql-replica:/var/lib/mysql
+      - ./docker/mysql/replica.cnf:/etc/mysql/conf.d/replica.cnf
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_REPLICA_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    security_opt:
+      - seccomp:"./docker/seccomp-mysql.json"
+    healthcheck:
+      test: mysqladmin ping -h mysql
+      timeout: 20s
+      retries: 10
+    networks:
+      default:
+        aliases:
+          - mysql-replica
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 0s
+        max_attempts: 10
+        window: 3s
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 1GB
+        reservations:
+          cpus: '0.50'
+          memory: 500M
+
+  mysql-main:
+    <<: *defaults
+    image: docker.io/library/mysql:8
+    container_name: mysql-main
+    hostname: mysql-main
+    command: 'mysqld --bind-address=0.0.0.0'
+    volumes:
+      - mysql-main:/var/lib/mysql
+      - ./docker/mysql/main.cnf:/etc/mysql/conf.d/main.cnf
+    ports:
+      - 33306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_MAIN_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    security_opt:
+      - seccomp:"./.production/mysql/seccomp.json"
+    healthcheck:
+      test: mysqladmin ping -h mysql
+      timeout: 20s
+      retries: 10
+    networks:
+      default:
+        aliases:
+          - mysql-main
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 0s
+        max_attempts: 10
+        window: 3s
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 1GB
+        reservations:
+          cpus: '0.50'
+          memory: 500M
+
+volumes:
+  mysql-main:
+    external: true
+    name: mysql-main-data
+  mysql-replica:
+    external: true
+    name: mysql-replica-data
+
+networks:
+  default:
+    external:
+      name: fiskil
