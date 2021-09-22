@@ -8,8 +8,7 @@ CREATE TABLE IF NOT EXISTS `service_logs` (
    `severity` ENUM("debug", "info", "warn", "error", "fatal") NOT NULL,
    `timestamp` DATETIME NOT NULL,
    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    INDEX index_service_logs_service_name (`service_name`),
-    INDEX index_service_logs_severity (`severity`),
+    INDEX index_service_logs_service_name_severity (`service_name`, `severity`),
     INDEX index_service_logs_timestamp (`timestamp`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED;
 
