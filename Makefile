@@ -26,12 +26,6 @@ mysql-init: ## applies mysql schema and initial test data
 		--project-directory . \
 		exec mysql bash -c "mysql -uroot -p'$(MYSQL_DEV_PASSWORD)' -q -s < /tmp/sql/test_data.sql"
 
-build:
-	docker-compose build log-ingest
-
-buildnc:
-	docker-compose build log-ingest --no-cache
-
 update: ## Pulls the latest go mysql zookeeper and kafka images
 	docker-compose \
 		-f .development/docker-compose.yaml \
@@ -45,10 +39,17 @@ up: ## Starts the publisher, kafka, mysql, and zookeeper containers
 		--project-directory . \
 		up -d 
 
-build-publisher:
+build:
 	docker-compose \
 		-f .development/docker-compose.yaml \
 		--project-directory . \
+		build publisher
+
+buildnc:
+	docker-compose \
+		-f .development/docker-compose.yaml \
+		--project-directory . \
+		--no-cache \
 		build publisher
 
 run-publisher:
@@ -57,7 +58,7 @@ run-publisher:
 		--project-directory . \
 		up publisher
 
-run: build-publisher run-publisher ## Build and run publisher
+run: build run-publisher ## Build and run publisher
 
 services: ## Starts all containers
 	docker-compose \
