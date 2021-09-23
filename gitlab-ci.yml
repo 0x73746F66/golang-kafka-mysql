@@ -1,0 +1,60 @@
+variables:
+  VERSION: 0.0.2
+  GIT_COMMIT_EMAIL: chris@langton.cloud
+  GIT_COMMIT_NAME: gitlab-ci
+
+before_script:
+  - make --version
+  - go version
+  - echo semgrep $(semgrep --version)
+
+stages:
+  - tests
+  - release
+
+test:sast:
+  tags:
+    - linode
+  stage: tests
+  script:
+    - make semgrep-sast-ci
+  only:
+    refs:
+      - merge_request
+      - main
+  artifacts:
+    name: sast-results
+    paths:
+      - semgrep-ci.json
+
+test:go:
+  tags:
+    - linode
+  stage: tests
+  script:
+    - make test
+  only:
+    refs:
+      - merge_request
+      - main
+
+release:tag:
+  tags:
+    - linode
+  stage: release
+  script:
+    - mkdir -p ~/.ssh
+    - aws s3 cp --only-show-errors s3://stateful-chrislangton/deploy-keys/gitlab_ci ~/.ssh/gitlab_ci
+    - chmod 400 ~/.ssh/gitlab_ci
+    - eval $(ssh-agent)>/dev/null
+    - ssh-add ~/.ssh/gitlab_ci >/dev/null 2>&1
+    - git remote set-url --push origin git@gitlab.com:$CI_PROJECT_PATH.git
+    - git remote show origin
+    - git config user.name $GIT_COMMIT_NAME
+    - git config user.email $GIT_COMMIT_EMAIL
+    - git tag -f ${VERSION}
+    - ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
+    - git push -f origin ${VERSION}
+  only:
+    refs:
+      - main

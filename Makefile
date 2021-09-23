@@ -83,3 +83,6 @@ test: ## runs go test on local not in Docker
 		-f .development/docker-compose.yaml \
 		--project-directory . \
 		run publisher go test -v ./...
+
+semgrep-sast-ci: ## run core semgrep rules for CI
+	semgrep --disable-version-check -q --strict --error -o semgrep-ci.json --json --timeout=0 --config=p/r2c-ci --lang=py src/**/*.gp
