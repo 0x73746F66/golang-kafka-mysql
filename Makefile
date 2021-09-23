@@ -77,3 +77,6 @@ down: ## Bring down containers and removes anything else orphaned
 		-f .development/docker-compose.yaml \
 		--project-directory . \
 		down --remove-orphans
+
+test: ## runs go test on local not in Docker
+	go test -v ./...

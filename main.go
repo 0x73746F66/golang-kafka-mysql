@@ -16,9 +16,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	kafka "github.com/segmentio/kafka-go"
-	_ "gitlab.com/chrislangton/fiskil"
-	"gitlab.com/chrislangton/fiskil/publisher/cli"
-	"gitlab.com/chrislangton/fiskil/publisher/generator"
+	"gitlab.com/chrislangton/fiskil/cli"
+	"gitlab.com/chrislangton/fiskil/generator"
 )
 
 type Message struct {
