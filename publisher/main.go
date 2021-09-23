@@ -14,11 +14,11 @@ import (
 	"syscall"
 	"time"
 
-	"fiskil/cli"
-	generator "fiskil/generator"
-
 	_ "github.com/go-sql-driver/mysql"
 	kafka "github.com/segmentio/kafka-go"
+	_ "gitlab.com/chrislangton/fiskil"
+	"gitlab.com/chrislangton/fiskil/publisher/cli"
+	"gitlab.com/chrislangton/fiskil/publisher/generator"
 )
 
 type Message struct {
@@ -148,7 +148,7 @@ func main() {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 	args := cli.Arguments()
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 100; i++ {
 		go gen_data(args)
 	}
 	process(args)

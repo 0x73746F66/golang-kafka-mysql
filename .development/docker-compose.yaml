@@ -9,7 +9,7 @@ services:
       - ./docker/mysql/main.cnf:/etc/mysql/conf.d/main.cnf
       - ./.development/mysql:/tmp/sql
     ports:
-      - 33306:3306
+      - 3307:3306
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_DEV_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
