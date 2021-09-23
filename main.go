@@ -34,12 +34,12 @@ type MysqlQueue struct {
 func gen_data(args cli.Flags) {
 	dialer := &kafka.Dialer{
 		Timeout:  10 * time.Second,
-		ClientID: args.clientId,
+		ClientID: args.ClientId,
 	}
 
 	config := kafka.WriterConfig{
-		Brokers:      args.brokers,
-		Topic:        args.topic,
+		Brokers:      args.Brokers,
+		Topic:        args.Topic,
 		Balancer:     &kafka.LeastBytes{},
 		Dialer:       dialer,
 		WriteTimeout: 10 * time.Second,
@@ -77,17 +77,17 @@ func gen_data(args cli.Flags) {
 }
 
 func process(args cli.Flags) {
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", args.mysqlUser, args.mysqlPassword, args.mysqlHost, args.mysqlPort, args.mysqlSchema))
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", args.MysqlUser, args.MysqlPassword, args.MysqlHost, args.MysqlPort, args.MysqlSchema))
 	if err != nil {
 		panic(err)
 	}
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(5)
-	queue := make([]Message, 0, args.insertBatchSize)
+	queue := make([]Message, 0, args.InsertBatchSize)
 	config := kafka.ReaderConfig{
-		Brokers:         args.brokers,
-		GroupID:         args.clientId,
-		Topic:           args.topic,
+		Brokers:         args.Brokers,
+		GroupID:         args.ClientId,
+		Topic:           args.Topic,
 		MinBytes:        10e3,            // 10KB
 		MaxBytes:        10e6,            // 10MB
 		MaxWait:         1 * time.Second, // Maximum amount of time to wait for new data to come when fetching batches of messages from kafka.
@@ -109,7 +109,7 @@ func process(args cli.Flags) {
 		queue = append(queue, message)
 		var currentTime = time.Now()
 		var duration = currentTime.Sub(timer)
-		if int(duration.Seconds()) >= args.flushIntervalSecs {
+		if int(duration.Seconds()) >= args.FlushIntervalSecs {
 			timer = time.Now()
 			con := MysqlQueue{
 				mysql:  *db,
@@ -120,7 +120,7 @@ func process(args cli.Flags) {
 				panic(dbErr.Error())
 			}
 		}
-		if len(queue) == args.insertBatchSize {
+		if len(queue) == args.InsertBatchSize {
 			con := MysqlQueue{
 				mysql:  *db,
 				values: queue,
