@@ -14,9 +14,10 @@ import (
 	"syscall"
 	"time"
 
-	gofakeit "github.com/brianvoe/gofakeit/v4"
+	"fiskil/cli"
+	generator "fiskil/generator"
+
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/namsral/flag"
 	kafka "github.com/segmentio/kafka-go"
 )
 
@@ -31,45 +32,29 @@ type MysqlQueue struct {
 	values []Message
 }
 
-var (
-	// cli arguments or env vars
-	brokerUrls        string
-	topic             string
-	clientId          string
-	insertBatchSize   int
-	flushIntervalSecs int
-	mysqlHost         string
-	mysqlPort         int
-	mysqlUser         string
-	mysqlPassword     string
-	mysqlSchema       string
-)
-
-func gen_data(brokers []string) {
+func gen_data(args cli.Flags) {
 	dialer := &kafka.Dialer{
 		Timeout:  10 * time.Second,
-		ClientID: clientId,
+		ClientID: args.clientId,
 	}
 
 	config := kafka.WriterConfig{
-		Brokers:      brokers,
-		Topic:        topic,
+		Brokers:      args.brokers,
+		Topic:        args.topic,
 		Balancer:     &kafka.LeastBytes{},
 		Dialer:       dialer,
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,
 	}
 	w := kafka.NewWriter(config)
+	logs := generator.Generate(50000)
 	services := []string{"api", "web", "cache", "authz", "authn", "idp", "dashboard", "backend"}
-	codes := []int{200, 301, 403, 404, 500}
-	in := []string{"debug", "info", "warn", "error", "fatal"}
+	sev := []string{"debug", "info", "warn", "error", "fatal"}
 	ctx := context.Background()
 	i := 0
-	for {
+	for _, payload := range logs {
 		pickService := services[rand.Intn(len(services))]
-		pickSeverity := in[rand.Intn(len(in))]
-		pickCode := codes[rand.Intn(len(codes))]
-		payload := fmt.Sprintf("%s %d /%s/%s", gofakeit.HTTPMethod(), pickCode, gofakeit.BuzzWord(), gofakeit.BuzzWord())
+		pickSeverity := sev[rand.Intn(len(sev))]
 		message := Message{
 			ServiceName: pickService,
 			Payload:     payload,
@@ -92,18 +77,18 @@ func gen_data(brokers []string) {
 	}
 }
 
-func process(brokers []string) {
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", mysqlUser, mysqlPassword, mysqlHost, mysqlPort, mysqlSchema))
+func process(args cli.Flags) {
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", args.mysqlUser, args.mysqlPassword, args.mysqlHost, args.mysqlPort, args.mysqlSchema))
 	if err != nil {
 		panic(err)
 	}
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(5)
-	queue := make([]Message, 0, insertBatchSize)
+	queue := make([]Message, 0, args.insertBatchSize)
 	config := kafka.ReaderConfig{
-		Brokers:         brokers,
-		GroupID:         clientId,
-		Topic:           topic,
+		Brokers:         args.brokers,
+		GroupID:         args.clientId,
+		Topic:           args.topic,
 		MinBytes:        10e3,            // 10KB
 		MaxBytes:        10e6,            // 10MB
 		MaxWait:         1 * time.Second, // Maximum amount of time to wait for new data to come when fetching batches of messages from kafka.
@@ -125,7 +110,7 @@ func process(brokers []string) {
 		queue = append(queue, message)
 		var currentTime = time.Now()
 		var duration = currentTime.Sub(timer)
-		if int(duration.Seconds()) >= flushIntervalSecs {
+		if int(duration.Seconds()) >= args.flushIntervalSecs {
 			timer = time.Now()
 			con := MysqlQueue{
 				mysql:  *db,
@@ -136,7 +121,7 @@ func process(brokers []string) {
 				panic(dbErr.Error())
 			}
 		}
-		if len(queue) == insertBatchSize {
+		if len(queue) == args.insertBatchSize {
 			con := MysqlQueue{
 				mysql:  *db,
 				values: queue,
@@ -160,22 +145,11 @@ func (con MysqlQueue) Persist() (sql.Result, error) {
 }
 
 func main() {
-	flag.StringVar(&brokerUrls, "brokers", "kafka:9092", "Kafka Broker Urls, comma separated")
-	flag.StringVar(&topic, "topic", "fiskil-logs", "Kafka topic")
-	flag.StringVar(&clientId, "client-id", "mysql-ingest", "client Id")
-	flag.IntVar(&insertBatchSize, "insert-batch-size", 5000, "how many INSERT statements to batch")
-	flag.IntVar(&flushIntervalSecs, "flush-interval-seconds", 60, "flush INSERT statements every n seconds")
-	flag.StringVar(&mysqlHost, "mysql-host", "mysql", "mysql main (write only) hostname")
-	flag.IntVar(&mysqlPort, "mysql-port", 3306, "mysql main (write only) port")
-	flag.StringVar(&mysqlUser, "mysql-user", "root", "mysql main (write only) user name")
-	flag.StringVar(&mysqlPassword, "mysql-password", "nil", "mysql main (write only) password")
-	flag.StringVar(&mysqlSchema, "mysql-schema", "fiskil", "mysql main (write only) schema")
-	flag.Parse()
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
-	brokers := strings.Split(brokerUrls, ",")
+	args := cli.Arguments()
 	for i := 0; i < 10; i++ {
-		go gen_data(brokers)
+		go gen_data(args)
 	}
-	process(brokers)
+	process(args)
 }
