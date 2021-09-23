@@ -28,6 +28,7 @@ run                            Build and run publisher
 services                       Starts all containers
 ps                             Shows this projects running docker containers
 down                           Bring down containers and removes anything else orphaned
+test                           runs go tests inside Docker
 ```
 
 3. Logical order of commands to run this project
@@ -36,8 +37,9 @@ down                           Bring down containers and removes anything else o
 - `make update`
 - `make services`
 - `make mysql-init` or use a GUI to execute `.development/mysql/schema.sql`
-- `docker exec -ti kafka /opt/bitnami/kafka/bin/kafka-topics.sh --create --zookeeper zookeeper:2181 --topic fiskil-logs --partitions 1 --replication-factor 1`
+- Create the Topic manually may be needed on Mac (I think, because auto create indexes setting worked fine on Linux): `docker exec -ti kafka /opt/bitnami/kafka/bin/kafka-topics.sh --create --zookeeper zookeeper:2181 --topic fiskil-logs --partitions 1 --replication-factor 1`
 - `make run` to consume the logs from kafka and ingest into mysql
+- `make test` to run some unit tests
 
 # Rationale
 
@@ -63,8 +65,8 @@ Using `INSERT .. ON DUPLICATE KEY UPDATE` is a single operation, significantly r
 ## Not mocking things
 
 I like to mock for QA, but this is an engineering role and a coding challenge. So standing up a couple of services and seeding dummy data is pretty straight forward (and fun).
+I ran out of time for writing full test coverage, so the functions with side effects (mysql/kafka) don't have unit test and typically have good QA tests done before a production release in a typical workplace.
 
 ## Writing less go than expected
 
-Why write code if there is a better way? Let the database do database things. 
-
+Why write code if there is a better way? Let the database do database things.
