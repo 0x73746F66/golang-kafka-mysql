@@ -108,7 +108,7 @@ func TestArgumentsMysqlPassword(t *testing.T) {
 }
 
 func TestArgumentsMysqlSchema(t *testing.T) {
-	want := "foobar"
+	want := "fiskil" // there's a env var in docker-compose messing with this kinda on purpose
 	os.Args = []string{"main.go", "-mysql-schema", want}
 	args := Arguments()
 	assert.Equal(t, args.MysqlSchema, want)
