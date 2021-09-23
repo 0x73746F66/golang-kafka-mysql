@@ -1,4 +1,4 @@
-module gitlab.com/chrislangton/fiskil/publisher
+module gitlab.com/chrislangton/fiskil
 
 go 1.16
 
