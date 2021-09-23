@@ -22,16 +22,16 @@ func TestArgumentsDefaults(t *testing.T) {
 	defaultMysqlSchema := "fiskil"
 	os.Args = []string{"main.go"}
 	args := Arguments()
-	assert.Equal(t, args.brokers, defaultBrokers)
-	assert.Equal(t, args.topic, defaultTopic)
-	assert.Equal(t, args.clientId, defaultClientId)
-	assert.Equal(t, args.insertBatchSize, defaultInsertBatchSize)
-	assert.Equal(t, args.flushIntervalSecs, defaultflushInterval)
-	assert.Equal(t, args.mysqlHost, defaultMysqlHost)
-	assert.Equal(t, args.mysqlPort, defaultMysqlPort)
-	assert.Equal(t, args.mysqlUser, defaultMysqlUser)
-	assert.Equal(t, args.mysqlPassword, defaultMysqlPassword)
-	assert.Equal(t, args.mysqlSchema, defaultMysqlSchema)
+	assert.Equal(t, args.Brokers, defaultBrokers)
+	assert.Equal(t, args.Topic, defaultTopic)
+	assert.Equal(t, args.ClientId, defaultClientId)
+	assert.Equal(t, args.InsertBatchSize, defaultInsertBatchSize)
+	assert.Equal(t, args.FlushIntervalSecs, defaultflushInterval)
+	assert.Equal(t, args.MysqlHost, defaultMysqlHost)
+	assert.Equal(t, args.MysqlPort, defaultMysqlPort)
+	assert.Equal(t, args.MysqlUser, defaultMysqlUser)
+	assert.Equal(t, args.MysqlPassword, defaultMysqlPassword)
+	assert.Equal(t, args.MysqlSchema, defaultMysqlSchema)
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 }
 
@@ -39,7 +39,7 @@ func TestArgumentsTopic(t *testing.T) {
 	want := "test"
 	os.Args = []string{"main.go", "-topic", want}
 	args := Arguments()
-	assert.Equal(t, args.topic, want)
+	assert.Equal(t, args.Topic, want)
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 }
 
@@ -47,7 +47,7 @@ func TestArgumentsBrokers(t *testing.T) {
 	want := []string{"kafka:9093"}
 	os.Args = []string{"main.go", "-brokers", "kafka:9093"}
 	args := Arguments()
-	assert.Equal(t, args.brokers, want)
+	assert.Equal(t, args.Brokers, want)
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 }
 
@@ -55,7 +55,7 @@ func TestArgumentsClientId(t *testing.T) {
 	want := "foobar"
 	os.Args = []string{"main.go", "-client-id", want}
 	args := Arguments()
-	assert.Equal(t, args.clientId, want)
+	assert.Equal(t, args.ClientId, want)
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 }
 
@@ -63,7 +63,7 @@ func TestArgumentsInsertBatchSize(t *testing.T) {
 	want := 1000
 	os.Args = []string{"main.go", "-insert-batch-size", fmt.Sprintf("%d", want)}
 	args := Arguments()
-	assert.Equal(t, args.insertBatchSize, want)
+	assert.Equal(t, args.InsertBatchSize, want)
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 }
 
@@ -71,7 +71,7 @@ func TestArgumentsFlushIntervalSecs(t *testing.T) {
 	want := 30
 	os.Args = []string{"main.go", "-flush-interval-seconds", fmt.Sprintf("%d", want)}
 	args := Arguments()
-	assert.Equal(t, args.flushIntervalSecs, want)
+	assert.Equal(t, args.FlushIntervalSecs, want)
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 }
 
@@ -79,7 +79,7 @@ func TestArgumentsMysqlHost(t *testing.T) {
 	want := "foobar"
 	os.Args = []string{"main.go", "-mysql-host", want}
 	args := Arguments()
-	assert.Equal(t, args.mysqlHost, want)
+	assert.Equal(t, args.MysqlHost, want)
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 }
 
@@ -87,7 +87,7 @@ func TestArgumentsMysqlPort(t *testing.T) {
 	want := 33306
 	os.Args = []string{"main.go", "-mysql-port", fmt.Sprintf("%d", want)}
 	args := Arguments()
-	assert.Equal(t, args.mysqlPort, want)
+	assert.Equal(t, args.MysqlPort, want)
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 }
 
@@ -95,7 +95,7 @@ func TestArgumentsMysqlUser(t *testing.T) {
 	want := "foobar"
 	os.Args = []string{"main.go", "-mysql-user", want}
 	args := Arguments()
-	assert.Equal(t, args.mysqlUser, want)
+	assert.Equal(t, args.MysqlUser, want)
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 }
 
@@ -103,7 +103,7 @@ func TestArgumentsMysqlPassword(t *testing.T) {
 	want := "foobar"
 	os.Args = []string{"main.go", "-mysql-password", want}
 	args := Arguments()
-	assert.Equal(t, args.mysqlPassword, want)
+	assert.Equal(t, args.MysqlPassword, want)
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 }
 
@@ -111,6 +111,6 @@ func TestArgumentsMysqlSchema(t *testing.T) {
 	want := "foobar"
 	os.Args = []string{"main.go", "-mysql-schema", want}
 	args := Arguments()
-	assert.Equal(t, args.mysqlSchema, want)
+	assert.Equal(t, args.MysqlSchema, want)
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 }

@@ -112,7 +112,7 @@ services:
     build:
       context: ./
     volumes:
-      - './main.go:/go/src/app/main.go'
+      - './src:/go/src/app'
     networks:
       default:
     environment:

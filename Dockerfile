@@ -6,7 +6,7 @@ RUN go get -d -v github.com/google/go-github/github && \
 FROM docker.io/library/golang:1.16-bullseye
 COPY --from=builder /go /go
 WORKDIR /go/src/fiskil
-COPY publisher publisher
-RUN go test -v ./...
-# RUN go install -v
-# CMD ["publisher"]
+COPY src .
+RUN go build -v .
+RUN go install -v .
+CMD ["fiskil"]

@@ -79,4 +79,7 @@ down: ## Bring down containers and removes anything else orphaned
 		down --remove-orphans
 
 test: ## runs go test on local not in Docker
-	go test -v ./...
+	docker-compose  \
+		-f .development/docker-compose.yaml \
+		--project-directory . \
+		run publisher go test -v ./...
