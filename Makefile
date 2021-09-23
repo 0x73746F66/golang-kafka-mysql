@@ -86,3 +86,6 @@ test: ## runs go test on local not in Docker
 
 semgrep-sast-ci: ## run core semgrep rules for CI
 	semgrep --disable-version-check -q --strict --error -o semgrep-ci.json --json --timeout=0 --config=p/r2c-ci --lang=py src/**/*.gp
+
+sast: ## runs semgrep (install with `python3 -m pip install semgrep`)
+	semgrep --strict --timeout=0 --config=p/r2c-ci --lang=py src/**/*.go
