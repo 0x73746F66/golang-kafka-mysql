@@ -1,4 +1,4 @@
-# Awesome code test for Fiskil
+# Awesome code test
 
 # Windows Prerequisites
 
